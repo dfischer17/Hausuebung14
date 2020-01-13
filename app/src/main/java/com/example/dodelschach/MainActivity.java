@@ -2,6 +2,8 @@ package com.example.dodelschach;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.res.Resources;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -9,7 +11,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Field;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    char[][] board = new char[3][3];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,21 +22,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
     }
 
-
     @Override
     public void onClick(View v) {
-        Button pressedButton = (Button) v;
-
-        // Wenn Button leer -> x setzen
-        if (pressedButton.getText().toString().equals("")) {
-            pressedButton.setText("X");
-        }
-
-        // Feld bereits belegt -> Toast anzeigen
-        else {
-            Toast.makeText(this.getApplicationContext(), "Dieses Feld wurde bereits belegt!", Toast.LENGTH_LONG).show();
-        }
-
+        // Buttons aus Layout anlegen
         Button button00 = findViewById(R.id.button00);
         Button button01 = findViewById(R.id.button01);
         Button button02 = findViewById(R.id.button02);
@@ -42,16 +35,59 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button button21 = findViewById(R.id.button21);
         Button button22 = findViewById(R.id.button22);
 
-        char[][] board = new char[3][3];
-        board[0][0] = button00.getText().toString().charAt(0);
-        board[1][0] = button01.getText().toString().charAt(0);
-        board[1][1] = button02.getText().toString().charAt(0);
-        board[2][0] = button10.getText().toString().charAt(0);
-        board[2][1] = button11.getText().toString().charAt(0);
-        board[2][2] = button12.getText().toString().charAt(0);
-        board[0][0] = button20.getText().toString().charAt(0);
-        board[0][0] = button21.getText().toString().charAt(0);
-        board[0][0] = button22.getText().toString().charAt(0);
+        // Buttons aus Layout in char[][] ueberfuehren
+        board[0][0] = convert(button00);
+        board[1][0] = convert(button01);
+        board[1][1] = convert(button02);
+        board[2][0] = convert(button10);
+        board[2][1] = convert(button11);
+        board[2][2] = convert(button12);
+        board[0][0] = convert(button20);
+        board[0][0] = convert(button21);
+        board[0][0] = convert(button22);
+
+        // Gedrueckter Button
+        Button pressedButton = (Button) v;
+
+        /*Spieler Zug*/
+
+        // Wenn Button leer -> x setzen
+        if (pressedButton.getText().toString().equals("")) {
+            // Spieler Zug Layout
+            pressedButton.setText("X");
+
+            // Spieler Zug intern
+            String temp = getResources().getResourceEntryName(pressedButton.getId());
+            temp = temp.replace("button" , "");
+            // x, y
+            int[] playerMove = new int[]{Integer.valueOf(Character.getNumericValue(temp.charAt(0))), Integer.valueOf(Character.getNumericValue(temp.charAt(1)))};
+            board[playerMove[1]][playerMove[0]] = 'X';
+        }
+
+        // Feld bereits belegt -> Toast anzeigen
+        else {
+            Toast.makeText(this.getApplicationContext(), "Dieses Feld wurde bereits belegt!", Toast.LENGTH_LONG).show();
+        }
+
+        /*Computer Zug*/
+
+        // Bestmoeglichen Zug bestimmen und Objekt BestMove mit x und y Koordinaten zurueckgeben
+        BestMove bestMove = findBestMove(board);
+
+        // Zug setzen
+        String bestButtonID = "button" + String.valueOf(bestMove.getY()) + String.valueOf(bestMove.getX());
+        int resID = this.getResources().getIdentifier(bestButtonID, "id", this.getPackageName());
+        Button computerChosenButton = this.findViewById(resID);
+
+        // Computer Zug Layout
+        computerChosenButton.setText("O");
+
+        // Computer Zug intern
+        String temp = getResources().getResourceEntryName(computerChosenButton.getId());
+        temp = temp.replace("button" , "");
+        // x, y
+        int[] computerMove = new int[]{Integer.valueOf(Character.getNumericValue(temp.charAt(0))), Integer.valueOf(Character.getNumericValue(temp.charAt(1)))};
+        board[computerMove[1]][computerMove[0]] = 'O';
 
     }
 
@@ -212,4 +248,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return counter > 0;
     }
+
+    private char convert(Button button) {
+        // Wenn Button Leerzeichen enthaelt
+        if (button.getText() == "") {
+            return ' ';
+        }
+        else {
+            return button.getText().toString().charAt(0);
+        }
+    }
+
+
 }
